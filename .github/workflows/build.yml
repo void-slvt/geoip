@@ -8,19 +8,15 @@ on:
       - master
     paths-ignore:
       - "README.md"
-      - "configuration.md"
       - ".gitignore"
       - "LICENSE"
-      - "**/dependabot.yml"
   pull_request:
     branches:
       - master
     paths-ignore:
       - "README.md"
-      - "configuration.md"
       - ".gitignore"
       - "LICENSE"
-      - "**/dependabot.yml"
 
 permissions:
   contents: write
@@ -43,6 +39,11 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
+      - name: Setup bgpq4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bgpq4
+
       - name: Set variables
         run: |
           echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
@@ -58,16 +59,72 @@ jobs:
           mkdir -p db-ip
           mv dbip-country-lite*.mmdb ./db-ip/dbip-country-lite.mmdb
 
+      - name: Get IPs from ASNs
+        run: |
+          mkdir -p asn
+          touch ./asn/banned_asn.txt
+          oracle=("AS31898" "AS54253" "AS1219" "AS6142" "AS14544" "AS20054")
+          akamai=("AS20940" "AS16625" "AS12222" "AS33905" "AS63949")
+          hetzner=("AS24940" "AS213230" "AS212317" "AS215859")
+          scaleway=("AS12876" "AS29447")
+          digitalocean=("AS14061" "AS46652")
+          aws=("AS16509" "AS14618" "AS8987")
+          cdn77=("AS60068" "AS212238")
+          cloudflare=("AS13335")
+          fastly=("AS54113")
+          ovh=("AS16276")
+          vultr=("AS20473")
+          creanova=("AS51765")
+          telegram=("AS62041")
+          for asn in "${oracle[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/oracle.txt
+          done
+          for asn in "${akamai[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/akamai.txt
+          done
+          for asn in "${hetzner[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/hetzner.txt
+          done
+          for asn in "${scaleway[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/scaleway.txt
+          done
+          for asn in "${digitalocean[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/digitalocean.txt
+          done
+          for asn in "${aws[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/aws.txt
+          done
+          for asn in "${cdn77[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/cdn77.txt
+          done
+          for asn in "${cloudflare[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/cloudflare.txt
+          done
+          for asn in "${fastly[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/fastly.txt
+          done
+          for asn in "${ovh[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/ovh.txt
+          done
+          for asn in "${vultr[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/vultr.txt
+          done
+          for asn in "${creanova[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/creanova.txt
+          done
+          for asn in "${telegram[@]}"; do
+              bgpq4 -F "%n/%l\n" $asn >> ./asn/telegram.txt
+          done
+          dest_file="./asn/banned_asn.txt"
+          for file_path in ./asn/*.txt; do
+              if [ -f "$file_path" ] && [ "$file_path" != "$dest_file" ]; then
+                  cat "$file_path" >> "$dest_file"
+              fi
+          done
+
       - name: Build GeoIP files
         run: |
           go run ./ -c ./config.json
-
-      - name: Generate sha256 checksum for dat files
-        run: |
-          cd ./output || exit 1
-          for name in $(ls *.dat); do
-            sha256sum ${name} > ./${name}.sha256sum
-          done
 
       - name: Git push assets to "release" branch
         if: github.event_name != 'pull_request'
@@ -75,7 +132,7 @@ jobs:
           cd output || exit 1
           git init
           git config --local user.name "github-actions[bot]"
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b release
           git add -A
           git commit -m "${{ env.RELEASE_NAME }}"
@@ -86,13 +143,6 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           gh release create ${{ env.TAG_NAME }} -t ${{ env.RELEASE_NAME }} \
-            ./output/geoip.dat \
-            ./output/geoip.dat.sha256sum \
-            ./output/geoip-only-cn-private.dat \
-            ./output/geoip-only-cn-private.dat.sha256sum \
-            ./output/cn.dat \
-            ./output/cn.dat.sha256sum \
-            ./output/private.dat \
-            ./output/private.dat.sha256sum
+            ./output/geoip.dat
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

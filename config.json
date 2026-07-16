@@ -8,11 +8,14 @@
       }
     },
     {
-      "type": "private",
-      "action": "add"
+      "type": "text",
+      "action": "add",
+      "args": {
+        "inputDir": "./asn"
+      }
     },
     {
-      "type": "test",
+      "type": "private",
       "action": "add"
     }
   ],
@@ -24,35 +27,6 @@
         "outputDir": "./output",
         "outputName": "geoip.dat"
       }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "outputDir": "./output",
-        "outputName": "geoip-only-cn-private.dat",
-        "wantedList": ["cn", "private"]
-      }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "outputDir": "./output",
-        "oneFilePerList": true,
-        "wantedList": ["cn", "private", "test"]
-      }
-    },
-    {
-      "type": "v2rayGeoIPDat",
-      "action": "output",
-      "args": {
-        "oneFilePerList": true
-      }
-    },
-    {
-      "type": "text",
-      "action": "output"
     }
   ]
 }

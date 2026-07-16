@@ -18,6 +18,7 @@ geolite2/
 db-ip/
 output/
 tmp/
+asn/
 geoip
 *.mmdb
 *.dat
