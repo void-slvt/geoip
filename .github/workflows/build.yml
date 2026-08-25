@@ -75,7 +75,7 @@ jobs:
           ovh=("AS16276")
           vultr=("AS20473")
           creanova=("AS51765")
-          telegram=("AS62041")
+          telegram=("AS62041" "AS211157")
           for asn in "${oracle[@]}"; do
               bgpq4 -F "%n/%l\n" $asn >> ./asn/oracle.txt
           done
